@@ -1,0 +1,60 @@
+{
+  "name": "M3 synthetic admission",
+  "on": {
+    "pull_request": {
+      "types": [
+        "opened"
+      ],
+      "branches": [
+        "main"
+      ]
+    }
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "jobs": {
+    "positive": {
+      "name": "positive",
+      "runs-on": "ubuntu-24.04",
+      "timeout-minutes": 2,
+      "env": {
+        "HEAD_SHA": "${{ github.event.pull_request.head.sha }}"
+      },
+      "steps": [
+        {
+          "name": "Fetch exact public synthetic HEAD",
+          "shell": "bash",
+          "run": "set -euo pipefail\n[[ \"$HEAD_SHA\" =~ ^[0-9a-f]{40}$ ]]\ngit init --quiet checkout\ncd checkout\ngit -c core.hooksPath=/dev/null -c credential.helper= -c protocol.allow=never -c protocol.https.allow=always fetch --no-tags --depth=1 https://github.com/velendor666/codex-m3-disposable-20261105.git \"$HEAD_SHA\"\ngit -c core.hooksPath=/dev/null checkout --quiet --detach FETCH_HEAD\ntest \"$(git rev-parse HEAD)\" = \"$HEAD_SHA\"\nprintf \"M3_HEAD=%s\\n\" \"$HEAD_SHA\""
+        },
+        {
+          "name": "Validate fixture",
+          "shell": "bash",
+          "working-directory": "checkout",
+          "run": "python3 -I -B check.py"
+        }
+      ]
+    },
+    "negative": {
+      "name": "negative",
+      "runs-on": "ubuntu-24.04",
+      "timeout-minutes": 2,
+      "env": {
+        "HEAD_SHA": "${{ github.event.pull_request.head.sha }}"
+      },
+      "steps": [
+        {
+          "name": "Fetch exact public synthetic HEAD",
+          "shell": "bash",
+          "run": "set -euo pipefail\n[[ \"$HEAD_SHA\" =~ ^[0-9a-f]{40}$ ]]\ngit init --quiet checkout\ncd checkout\ngit -c core.hooksPath=/dev/null -c credential.helper= -c protocol.allow=never -c protocol.https.allow=always fetch --no-tags --depth=1 https://github.com/velendor666/codex-m3-disposable-20261105.git \"$HEAD_SHA\"\ngit -c core.hooksPath=/dev/null checkout --quiet --detach FETCH_HEAD\ntest \"$(git rev-parse HEAD)\" = \"$HEAD_SHA\"\nprintf \"M3_HEAD=%s\\n\" \"$HEAD_SHA\""
+        },
+        {
+          "name": "Validate fixture",
+          "shell": "bash",
+          "working-directory": "checkout",
+          "run": "python3 -I -B check.py --negative"
+        }
+      ]
+    }
+  }
+}
